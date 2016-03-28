@@ -22,9 +22,8 @@ PLAT_HEIGHT DB		; Used
 
 LAST_BG_SCROLL DB	; Used
 
-PLAYER_X DB		; Used
-PLAYER_Y DB		; Used
-PLAYER_YFINE DW		; Used
+PLAYER_X_HD DW		; Used
+PLAYER_Y_HD DW		; Used
 PLAYER_YSPD DW		; Used
 PLAYER_ONGROUND DB	; Used
 JUMPING DB		; Used
@@ -67,6 +66,8 @@ PLAYER_ANIM DB		; Used
 
 NOTES_GEN DB		; Used
 
-REFRESH_P DB		; Player sprite refresh request flag
+REFRESH_P DB		; Used Player sprite refresh request flag
+
+SCROLL_DELTA DB		; Used
 
 .ENDE

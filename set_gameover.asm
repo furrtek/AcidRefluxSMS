@@ -42,7 +42,7 @@ setup_gameover:
   ld   hl,map_gameover
   ld   bc,$0E13
   call maptiles
-  
+
   ld   hl,$3800+((11+(14*32))*2)
   ld   b,10+T_FONTGO
 -:
@@ -57,17 +57,8 @@ setup_gameover:
 
   ; Show score
   ld   hl,$3800+((17+(14*32))*2)
-  ld   b,6
-  ld   de,SCORE_BCD
--:
-  ld   a,(de)
-  inc  de
-  add  a,T_FONTGO
-  call setbgtile
-  inc  hl
-  inc  hl
-  dec  b
-  jr   nz,-
+  ld   c,T_FONTGO
+  call writescore
 
   xor  a
   ld   (TIMER),a

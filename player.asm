@@ -11,10 +11,10 @@ update_pspr:
   push ix
   pop  ix
 
-  ld   a,(PLAYER_Y)
+  ld   a,(PLAYER_Y_HD+1)
   call setpy
 
-  ld   a,(PLAYER_Y)
+  ld   a,(PLAYER_Y_HD+1)
   add  a,16
   call setpy
   
@@ -38,12 +38,12 @@ update_pspr:
   add  a,e
   ld   e,a		; E = animation frame #
 
-  ld   a,(PLAYER_X)
+  ld   a,(PLAYER_X_HD+1)
   ld   c,a
   ld   a,T_PLAYER
   call setpxn
 
-  ld   a,(PLAYER_X)
+  ld   a,(PLAYER_X_HD+1)
   ld   c,a
   ld   a,T_PLAYER+(2*5)
   call setpxn

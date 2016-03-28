@@ -12,7 +12,7 @@ proc_game:
   ld   b,7
   rst  $10
 
-  ld   a,$40
+  ld   a,$40		; T_BGSA*32
   out  ($BF),a
   push ix
   pop  ix
@@ -42,24 +42,46 @@ proc_game:
   inc  hl
   dec  b
   jr   nz,-
-  
+
   ld   a,6		; Overscan color debug
   ld   b,7
   rst  $10
 
-
-  ld   hl,$3800+16+18	; Update score. Todo: Make conditional too !
-  ld   b,6
-  ld   de,SCORE_BCD
+  ld   a,$00		; T_BGSB*32
+  out  ($BF),a
+  push ix
+  pop  ix
+  ld   a,$42
+  out  ($BF),a
+  ld   a,(BG_SCROLL)	; /2 *32 = *16
+  and  $1C
+  sla  a
+  sla  a
+  sla  a
+  ld   hl,SWSCROLL_BUF
+  rst  $8
+  ld   b,8
 -:
-  ld   a,(de)
-  inc  de
-  add  a,T_FONT
-  call setbgtile
+  ld   a,(hl)
+  out  ($BE),a
   inc  hl
+  ld   a,(hl)
+  out  ($BE),a
+  inc  hl
+  ld   a,(hl)
+  out  ($BE),a
+  inc  hl
+  ld   a,(hl)
+  out  ($BE),a
   inc  hl
   dec  b
   jr   nz,-
+
+
+
+  ld   hl,$3800+16+18	; Update score. Todo: Make conditional too !
+  ld   c,T_FONT
+  call writescore
 
 
   ; Gen platforms
@@ -128,16 +150,21 @@ proc_game:
 +++:
 
 
+  ld   a,(BG_SCROLL)
+  ld   b,a
+  ld   a,(LAST_BG_SCROLL)
+  sub  b
+  ld   (SCROLL_DELTA),a
+
+
   ; TODO: MOVE LOWER !
   ld   a,(ANIM_EN)	; Only animate player's little legs if we're enabled and on the ground
   ld   b,a
   ld   a,(PLAYER_ONGROUND)
   and  b
   jr   z,+
-  ld   a,(BG_SCROLL)	; Scroll delta = animation speed
-  ld   b,a
-  ld   a,(LAST_BG_SCROLL)
-  sub  b
+  ld   a,(SCROLL_DELTA)
+  or   a
   jr   z,+
   ld   b,a
   ld   a,(PLAYER_ANIM)
@@ -151,8 +178,8 @@ proc_game:
   xor  $FF
   ld   b,a
 
-  ld   a,(PLAYER_X)
-  add  a,32		; Player's "center"
+  ld   a,(PLAYER_X_HD+1)
+  add  a,4+20		; Player's "center"
   add  a,b
   srl  a
   srl  a
@@ -162,8 +189,8 @@ proc_game:
   rst  $8
   ld   c,a
 
-  ld   a,(PLAYER_X)
-  add  a,9+32		; Player's right edge
+  ld   a,(PLAYER_X_HD+1)
+  add  a,11+32		; Player's right edge
   add  a,b
   srl  a
   srl  a
@@ -179,9 +206,9 @@ proc_game:
   ; Check Y
 
   ld   a,d		; Ugly :)
-  add  a,11
+  add  a,10
   ld   d,a
-  ld   a,(PLAYER_Y)
+  ld   a,(PLAYER_Y_HD+1)
   srl  a
   srl  a
   srl  a
@@ -192,15 +219,12 @@ proc_game:
   xor  a
   ld   (ANIM_EN),a
 
-  ld   a,(LAST_BG_SCROLL)
-  ld   b,a
-  ld   a,(BG_SCROLL)
-  sub  b
+  ld   a,(SCROLL_DELTA)
   ld   b,a
 
-  ld   a,(PLAYER_X)
-  add  a,b
-  ld   (PLAYER_X),a
+  ld   a,(PLAYER_X_HD+1)
+  sub  b
+  ld   (PLAYER_X_HD+1),a
   cp   8
   jr   nc,++          	; Trig game over
   ld   a,ST_SET_GAMEOVER
@@ -214,11 +238,26 @@ proc_game:
   ld   a,(PLAYER_RR)	; Player wants to go right ?
   or   a
   jr   z,++
-  ld   a,(PLAYER_X)	; Right cap
-  cp   256-50
+  ld   a,(PLAYER_X_HD+1)
+  cp   256-50           ; Right cap
   jr   nc,++
+  ld   b,a
   inc  a
-  ld   (PLAYER_X),a
+  ld   h,a
+  ld   a,(PLAYER_X_HD)
+  ld   l,a
+  ld   a,(SCROLL_DELTA)	; 1->$40 2->$80 3->$C0 4->$100 ...
+  ld   d,a
+  ld   e,0
+  srl  d
+  rr   e
+  srl  d
+  rr   e
+  sbc  hl,de
+  ld   a,h
+  cp   b
+  jr   c,++
+  ld   (PLAYER_X_HD),hl
 ++:
 
   ld   a,1
@@ -228,7 +267,7 @@ proc_game:
   ld   a,(BG_SCROLL)
   xor  $FF
   ld   b,a
-  ld   a,(PLAYER_X)
+  ld   a,(PLAYER_X_HD+1)
   add  a,4+20		; Player's "center". Todo: Here be glitch, use ALL ground heights beneath player and take highest !
   add  a,b
   srl  a
@@ -239,13 +278,10 @@ proc_game:
   rst  $8
   ld   c,a
 
-  ld   a,(PLAYER_YFINE+1)
-  ld   (PLAYER_Y),a
-
   ld   a,c		; Ugly :)
-  add  a,10
+  add  a,9
   ld   c,a
-  ld   a,(PLAYER_Y)
+  ld   a,(PLAYER_Y_HD+1)
   srl  a
   srl  a
   srl  a
@@ -258,9 +294,9 @@ proc_game:
   ld   (PLAYER_YSPD),hl
   ld   d,h
   ld   e,l
-  ld   hl,(PLAYER_YFINE)
+  ld   hl,(PLAYER_Y_HD)
   add  hl,de
-  ld   (PLAYER_YFINE),hl
+  ld   (PLAYER_Y_HD),hl
   
   ld   a,1
   ld   (REFRESH_P),a	; Y changed
@@ -272,9 +308,9 @@ proc_game:
 +:
   ld   hl,0		; Reset Y speed
   ld   (PLAYER_YSPD),hl
-  ld   a,(PLAYER_Y)	; Round to ground
+  ld   a,(PLAYER_Y_HD+1)	; Round to ground
   and  $F8
-  ld   (PLAYER_Y),a
+  ld   (PLAYER_Y_HD+1),a
   ld   a,1
   ld   (REFRESH_P),a	; Y changed
   ld   a,1
@@ -284,13 +320,11 @@ proc_game:
 
 
   ; BG scrolling
-  ld   hl,(BG_SCROLL_HD)	; 12.4
+  ld   hl,(BG_SCROLL_HD)	; 11.5
   ld   de,(SCROLL_SPD)
   add  hl,de
-  ld   (BG_SCROLL_HD),hl	; 0000HHHH HHHHLLLL
+  ld   (BG_SCROLL_HD),hl	; 000HHHHH HHHLLLLL
 
-  sla  l
-  rl   h
   ld   a,h
   ld   (BG_SCROLL_D8),a         ; 000HHHHH
   sla  l
@@ -323,11 +357,11 @@ proc_game:
   ld   a,(JP_CURRENT)		; Left
   bit  2,a
   jr   z,+
-  ld   a,(PLAYER_X)		; Left cap
+  ld   a,(PLAYER_X_HD+1)		; Left cap
   cp   12
   jr   c,+
   dec  a
-  ld   (PLAYER_X),a
+  ld   (PLAYER_X_HD+1),a
 +:
 
   ld   a,(JP_ACTIVE)		; Button 1
@@ -354,9 +388,9 @@ proc_game:
   ld   (PLAYER_YSPD),hl
   ld   d,h
   ld   e,l
-  ld   hl,(PLAYER_YFINE)	; Add to Y pos
+  ld   hl,(PLAYER_Y_HD)	; Add to Y pos
   add  hl,de
-  ld   (PLAYER_YFINE),hl
+  ld   (PLAYER_Y_HD),hl
   ld   a,1
   ld   (REFRESH_P),a		; Y changed
   jr   ++
@@ -421,28 +455,7 @@ proc_game:
   ld   a,(SCORE_BCD+2)
   push af
 
-  ; Inc score
-  ld   hl,SCORE_BCD+5
-  ld   de,SCORE_ADD+5
-  ld   c,0
-  ld   b,6
--:
-  ld   a,(hl)
-  add  a,c
-  ld   c,a
-  ld   a,(de)
-  add  a,c
-  ld   c,0
-  cp   10
-  jr   c,+
-  sub  10
-  ld   c,1
-+:
-  ld   (hl),a
-  dec  hl
-  dec  de
-  dec  b
-  jr   nz,-
+  call incscore
 
   ; Speed up ?
   ld   a,(SCORE_BCD+2)
@@ -452,7 +465,7 @@ proc_game:
   jr   z,++
 
   ld   hl,(SCROLL_SPD)
-  ld   de,-$0002
+  ld   de,-$0004
   add  hl,de
   ld   (SCROLL_SPD),hl
 

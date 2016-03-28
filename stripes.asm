@@ -48,6 +48,7 @@ jt_stripe:
   .dw sz_3
   .dw sz_4
   .dw sz_5
+  .dw sz_6
 
 sz_0:                 	; First unique bush tile
   ld   hl,STRIPE_ZONE
@@ -56,7 +57,29 @@ sz_0:                 	; First unique bush tile
   ld   a,T_BGF
   ret
 
-sz_1:                	; Replicated bush tiles (height)
+sz_1:                	; Replicated bush tiles A (height)
+  ld   hl,STRIPE_ZONE
+  inc  d
+  ld   a,d
+  cp   c
+  jr   nc,++
+  cp   3
+  jr   z,+		; Ugly :)
+  ld   a,T_BGSA
+  ret
+++:
+  ld   d,0
+  inc  (hl)
+  inc  (hl)
+  ld   a,T_BGSA
+  ret
++:
+  ld   d,3
+  inc  (hl)
+  ld   a,T_BGSA
+  ret
+  
+sz_2:			; Replicated bush tiles B (height)
   inc  d
   ld   a,d
   cp   c
@@ -64,11 +87,11 @@ sz_1:                	; Replicated bush tiles (height)
   ld   hl,STRIPE_ZONE
   inc  (hl)
   ld   d,0
-+
-  ld   a,T_BGS
++:
+  ld   a,T_BGSB
   ret
-  
-sz_2:			; Ground
+
+sz_3:			; Ground
   inc  d
   ld   a,d
   cp   4
@@ -76,11 +99,15 @@ sz_2:			; Ground
   ld   hl,STRIPE_ZONE
   inc  (hl)
   ld   d,0
-+
++:
+  ld   a,e
+  or   a
   ld   a,T_GND
+  ret  nz
+  ld   a,T_GNDB
   ret
 
-sz_3:			; Platform edge
+sz_4:			; Platform edge
   inc  d
   ld   a,e
   or   a
@@ -133,7 +160,7 @@ sz_3:			; Platform edge
   ld   a,T_DIRT_A
   ret
 +:
-  ld   a,5
+  ld   a,6
   ld   (STRIPE_ZONE),a
   ld   a,T_DIRT_B
   ret
@@ -166,7 +193,7 @@ sz_3:			; Platform edge
   ld   a,T_COL_C
   ret
   
-sz_4:			; Fill down (column)
+sz_5:			; Fill down (column)
   ld   a,b
   cp   13
   jr   c,+
@@ -176,7 +203,7 @@ sz_4:			; Fill down (column)
   ld   a,T_COL_C
   ret
   
-sz_5:			; Fill down (dirt)
+sz_6:			; Fill down (dirt)
   ld   a,T_DIRT_B
   ret
 

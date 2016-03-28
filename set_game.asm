@@ -42,7 +42,7 @@ setup_game:
   call loadtiles
   ld   de,T_TILESET*32
   ld   hl,tiles_tileset
-  ld   b,14
+  ld   b,15
   call loadtiles
   ld   de,T_OBJECTS*32
   ld   hl,tiles_objects
@@ -59,7 +59,7 @@ setup_game:
 
   ; Pre-gen software scrolled tiles
   ; Copy non-scrolled tile in slot 0
-  ld   hl,tiles_tileset+((T_BGS-1)*32)
+  ld   hl,tiles_tileset+((T_BGSA-1)*32)
   ld   de,SWSCROLL_BUF
   ld   bc,32
   ldir
@@ -197,11 +197,10 @@ setup_game:
   ld   (PLAT_COUNT),a
   ld   a,3
   ld   (PLAT_HEIGHT),a
-  ld   a,$90
-  ld   (PLAYER_X),a
-  ld   a,$30
-  ld   (PLAYER_YFINE+1),a
-  ld   (PLAYER_Y),a
+  ld   hl,$9000
+  ld   (PLAYER_X_HD),hl
+  ld   hl,$3000
+  ld   (PLAYER_Y_HD),hl
   ld   hl,0
   ld   (BG_SCROLL_HD),hl
   ld   (PLAYER_YSPD),hl
@@ -244,7 +243,7 @@ setup_game:
   dec  b
   jr   nz,-
 
-  ld   hl,-$0010
+  ld   hl,-$0020
   ld   (SCROLL_SPD),hl
 
   ld   a,ST_GAME

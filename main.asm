@@ -24,7 +24,7 @@ BANKS 1
 .DEFINE ST_SET_GAMEOVER 4
 .DEFINE ST_GAMEOVER 5
 
-.SDSCTAG 1.0,"ACID REFLUX","Runner done for SMSPower coding compo 2016","Furrtek and Robotwo"
+.SDSCTAG 1.1,"ACID REFLUX","Runner done for SMSPower coding compo 2016","Furrtek and Robotwo"
 
 .BANK 0 SLOT 0
 .ORG $0000
@@ -153,11 +153,11 @@ proc_gameover:
   
 
 delayen:
-  ld   a,(RES_EN)
+  ld   a,(RES_EN)	; Prevent accidental press from skipping screen for the first 64 frames
   or   a
   ret  nz
   ld   a,(TIMER)
-  cp   $40
+  cp   64
   ld   a,0
   ret  nz
   ld   a,1
@@ -170,6 +170,7 @@ delayen:
 .INCLUDE "sound.asm"
 .INCLUDE "rli.asm"
 .INCLUDE "game.asm"
+.INCLUDE "score.asm"
 .INCLUDE "set_title.asm"
 .INCLUDE "set_game.asm"
 .INCLUDE "set_gameover.asm"
